@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Race Dashboard</title>
+<style>
+  /* System font stack — no internet required */
+</style>
+<style>
+  :root {
+    --bg: #080808;
+    --bg2: #0f0f0f;
+    --bg3: #141414;
+    --border: #1c1c1c;
+    --border2: #242424;
+    --text: #e8e8e8;
+    --text2: #888;
+    --text3: #444;
+    --swim: #60a5fa;
+    --bike: #4ade80;
+    --run: #f87171;
+    --power: #fbbf24;
+    --total: #e8e8e8;
+    --iron: #ef4444;
+    --703: #3b82f6;
+    --t100: #a855f7;
+    --dual: #f59e0b;
+    --hm: #eab308;
+    --10k: #84cc16;
+    --best: #4ade80;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 32px 28px 24px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .header-left {}
+  .title {
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif; font-weight: 800; letter-spacing: 0.02em;
+    font-size: clamp(42px, 6vw, 72px);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: #f0f0f0;
+  }
+  .title span { color: var(--703); }
+  .subtitle {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace;
+    font-size: 11px; color: var(--text3);
+    margin-top: 6px; letter-spacing: 0.06em;
+  }
+  .header-right {
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace;
+    font-size: 11px; color: var(--text3);
+    text-align: right; line-height: 1.8;
+  }
+
+  /* ── STATS ── */
+  .stats { display: flex; flex-wrap: wrap; gap: 1px; border-bottom: 0.5px solid var(--border); }
+  .stat {
+    flex: 1; min-width: 110px;
+    padding: 16px 20px;
+    border-right: 0.5px solid var(--border);
+    background: var(--bg2);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .stat-value { font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif; font-weight: 800; letter-spacing: 0.02em; font-size: 28px; letter-spacing: 0.04em; line-height: 1; }
+  .stat-sub { font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace; font-size: 9px; color: var(--text3); margin-top: 3px; }
+
+  /* ── FILTERS ── */
+  .filters {
+    padding: 12px 28px;
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg2);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .filter-btn {
+    background: transparent; border: 0.5px solid var(--border2);
+    color: var(--text3); padding: 4px 12px; border-radius: 3px;
+    font-size: 11px; cursor: pointer; font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    transition: all 0.12s; white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: #333; color: var(--text2); }
+  .filter-btn.active { background: var(--bg3); border-color: #333; color: var(--text); }
+  .filter-count { font-size: 9px; color: var(--text3); margin-left: 4px; }
+  .sort-btn {
+    margin-left: auto; background: transparent; border: 0.5px solid var(--border2);
+    color: var(--text3); padding: 4px 12px; border-radius: 3px;
+    font-size: 11px; cursor: pointer; font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  }
+  .sort-btn:hover { color: var(--text2); border-color: #333; }
+  .search-wrap { position: relative; margin-left: auto; display: flex; align-items: center; }
+  .search-input {
+    background: transparent; border: 0.5px solid var(--border2);
+    color: var(--text); padding: 4px 12px 4px 30px; border-radius: 3px;
+    font-size: 11px; font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif; width: 180px;
+    outline: none; transition: all 0.15s;
+  }
+  .search-input:focus { border-color: #444; width: 220px; }
+  .search-input::placeholder { color: var(--text3); }
+  .search-icon { position: absolute; left: 9px; color: var(--text3); font-size: 12px; pointer-events: none; }
+  .search-clear { position: absolute; right: 8px; color: var(--text3); font-size: 12px; cursor: pointer; display: none; }
+  .search-clear:hover { color: var(--text2); }
+
+  /* ── SECTIONS ── */
+  .section { border-bottom: 0.5px solid var(--border); }
+  .section-header {
+    padding: 8px 28px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text3);
+    background: #0a0a0a;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .section-count { color: #222; }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 820px; }
+  thead th {
+    font-size: 9px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 8px 10px; border-bottom: 0.5px solid var(--border);
+    text-align: left; white-space: nowrap;
+    background: var(--bg);
+  }
+  tbody tr { transition: background 0.08s; }
+  tbody tr:hover { background: #111; }
+  tbody td {
+    padding: 11px 10px; border-bottom: 0.5px solid #0e0e0e;
+    vertical-align: top; font-size: 12px;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* ── CELL TYPES ── */
+  .mono { font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace; }
+  .cell-race-name { font-weight: 600; font-size: 13px; color: #e0e0e0; margin-bottom: 4px; }
+  .cell-meta { display: flex; align-items: center; gap: 6px; }
+  .cell-date { font-size: 10px; color: var(--text3); font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace; }
+  .cell-time { font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace; font-weight: 500; font-size: 13px; }
+  .cell-sub { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace; }
+  .cell-dim { font-size: 11px; color: #2e2e2e; }
+  .cell-na { color: #222; font-size: 11px; }
+  .cell-total { font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace; font-weight: 700; font-size: 14px; }
+
+  /* ── PILLS ── */
+  .pill {
+    display: inline-block; font-size: 8px; font-weight: 700;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 2px;
+  }
+
+  /* ── BEST TAG ── */
+  .best {
+    display: inline-block; font-size: 8px; font-weight: 800;
+    color: var(--best); background: #041a0a;
+    border: 0.5px solid #4ade8033;
+    padding: 1px 4px; border-radius: 2px;
+    margin-left: 5px; letter-spacing: 0.05em;
+    vertical-align: middle;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center; padding: 48px 20px;
+    color: #1e1e1e; font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace; font-size: 12px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding: 16px 28px;
+    font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace; font-size: 10px;
+    color: #1e1e1e; text-align: center;
+    border-top: 0.5px solid var(--border);
+  }
+
+  @media (max-width: 600px) {
+    .header { padding: 16px 12px 12px; flex-direction: column; gap: 8px; }
+    .title { font-size: 36px; }
+    .subtitle { font-size: 10px; }
+    .header-right { font-size: 10px; text-align: left; }
+    .stats { overflow-x: auto; flex-wrap: nowrap; }
+    .stat { min-width: 100px; padding: 12px 14px; flex-shrink: 0; }
+    .stat-value { font-size: 22px; }
+    .filters { padding: 8px 12px; gap: 5px; position: sticky; top: 0; z-index: 10; overflow-x: auto; flex-wrap: nowrap; }
+    .filter-btn { font-size: 10px; padding: 4px 9px; flex-shrink: 0; }
+    .sort-btn { font-size: 10px; padding: 4px 9px; flex-shrink: 0; }
+    .search-wrap { min-width: 130px; }
+    .search-input { width: 130px; font-size: 10px; }
+    .search-input:focus { width: 150px; }
+    .section-header { padding: 8px 12px; font-size: 9px; }
+    /* Table: fixed first column, scroll the rest */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; }
+    table { min-width: 680px; }
+    thead th { font-size: 8.5px; padding: 6px 6px; white-space: nowrap; }
+    tbody td { padding: 9px 6px; font-size: 11px; }
+    .cell-race-name { font-size: 11.5px; }
+    .cell-time { font-size: 12px; }
+    .cell-total { font-size: 12px; }
+    /* Sticky first column */
+    thead th:first-child,
+    tbody td:first-child {
+      position: sticky; left: 0; z-index: 2;
+      background: var(--bg); min-width: 110px; max-width: 110px;
+    }
+    thead th:first-child { background: var(--bg); z-index: 3; }
+    tbody tr:hover td:first-child { background: #111; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="title">Race<span>.</span>Dashboard</div>
+    <div class="subtitle">TRAININGPEAKS · PERSONAL RACE HISTORY</div>
+  </div>
+  <div class="header-right" id="header-meta"></div>
+</div>
+
+<div class="stats" id="stats-row"></div>
+<div class="filters" id="filters-row"></div>
+<div id="content"></div>
+
+<div class="footer" id="footer-text"></div>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────────
+const RACES = [
+  {
+    id:"15087055", name:"IRONMAN 140.6 Austria", date:"2022-07-03", type:"FullIron",
+    total_seconds:46675, place_division:159, entrants_division:198, place_overall:1221, entrants_overall:2170,
+    swim:{seconds:4605, distance_km:3.35, pace_per_100m:"2:17"},
+    t1:{seconds:671}, t2:{seconds:554},
+    bike:{seconds:21532, distance_km:179.8, speed_kmh:30.0, np_watts:207, avg_watts:187, elevation_m:1596},
+    run:{seconds:19313, distance_km:43.2, pace_per_km:"7:27", avg_hr:125},
+  },
+  {
+    id:"18012098", name:"Challenge Almere", date:"2022-09-10", type:"70.3",
+    total_seconds:18244, place_division:31, entrants_division:89, place_overall:164, entrants_overall:863,
+    swim:{seconds:2169, distance_km:1.9, pace_per_100m:"1:54"},
+    t1:{seconds:320}, t2:{seconds:228},
+    bike:{seconds:9896, distance_km:90.9, speed_kmh:35.2, np_watts:260, avg_watts:253, elevation_m:120},
+    run:{seconds:5631, distance_km:21.1, pace_per_km:"4:27", avg_hr:142},
+  },
+  {
+    id:"19768255", name:"IM 70.3 Mallorca", date:"2023-05-13", type:"70.3",
+    total_seconds:17837, place_division:35, entrants_division:346, place_overall:165, entrants_overall:2509,
+    swim:{seconds:1990, distance_km:1.9, pace_per_100m:"1:44"},
+    t1:{seconds:290}, t2:{seconds:165},
+    bike:{seconds:10232, distance_km:89.3, speed_kmh:31.6, np_watts:244, avg_watts:225, elevation_m:933},
+    run:{seconds:5160, distance_km:21.1, pace_per_km:"4:04", avg_hr:null},
+  },
+  {
+    id:"22696142", name:"IM 70.3 WC Finland", date:"2023-08-27", type:"70.3",
+    total_seconds:16840, place_division:262, entrants_division:451, place_overall:1214, entrants_overall:3322,
+    swim:{seconds:2132, distance_km:1.8, pace_per_100m:"1:58"},
+    t1:{seconds:200}, t2:{seconds:300},
+    bike:{seconds:8878, distance_km:89.9, speed_kmh:36.4, np_watts:248, avg_watts:237, elevation_m:740},
+    run:{seconds:5330, distance_km:21.1, pace_per_km:"4:12", avg_hr:null},
+  },
+  {
+    id:"24702274", name:"IM 70.3 Luxembourg", date:"2024-06-30", type:"70.3",
+    total_seconds:17862, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:2155, distance_km:1.9, pace_per_100m:"1:54"},
+    t1:{seconds:600}, t2:{seconds:352},
+    bike:{seconds:9500, distance_km:90.7, speed_kmh:34.3, np_watts:236, avg_watts:217, elevation_m:616},
+    run:{seconds:5255, distance_km:21.0, pace_per_km:"4:10", avg_hr:154},
+  },
+  {
+    id:"25430741", name:"T100 Ibiza", date:"2024-09-29", type:"T100",
+    total_seconds:14430, place_division:11, entrants_division:58, place_overall:51, entrants_overall:578,
+    swim:{seconds:2046, distance_km:2.06, pace_per_100m:"1:39"},
+    t1:{seconds:150}, t2:{seconds:118},
+    bike:{seconds:7610, distance_km:79.95, speed_kmh:37.8, np_watts:273, avg_watts:268, elevation_m:508},
+    run:{seconds:4499, distance_km:18.07, pace_per_km:"4:09", avg_hr:null},
+  },
+  {
+    id:"30116696", name:"IM 70.3 Westfriesland", date:"2025-06-22", type:"70.3",
+    total_seconds:15927, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:2000, distance_km:1.9, pace_per_100m:"1:45"},
+    t1:{seconds:158}, t2:{seconds:131},
+    bike:{seconds:8211, distance_km:91.5, speed_kmh:39.9, np_watts:265, avg_watts:258, elevation_m:125},
+    run:{seconds:5427, distance_km:21.4, pace_per_km:"4:15", avg_hr:165},
+  },
+  {
+    id:"33187712", name:"IM 70.3 WC Marbella", date:"2025-11-09", type:"70.3",
+    total_seconds:20553, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:2039, distance_km:1.9, pace_per_100m:"1:44"},
+    t1:{seconds:601}, t2:{seconds:281},
+    bike:{seconds:10538, distance_km:86.7, speed_kmh:29.6, np_watts:235, avg_watts:214, elevation_m:1502},
+    run:{seconds:7094, distance_km:21.0, pace_per_km:"5:36", avg_hr:134},
+  },
+  {
+    id:"30117119", name:"RBR Rotterdam Duathlon", date:"2025-04-06", type:"Duathlon",
+    total_seconds:7468, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run1:{seconds:2162, distance_km:9.68, pace_per_km:"3:44", avg_hr:171},
+    t1:{seconds:66}, t2:{seconds:42},
+    bike:{seconds:4093, distance_km:42.3, speed_kmh:37.2, np_watts:288, avg_watts:283, elevation_m:99},
+    run2:{seconds:1105, distance_km:4.91, pace_per_km:"3:45", avg_hr:167},
+    run:{seconds:3267, distance_km:14.59, pace_per_km:"3:44", avg_hr:169},
+  },
+  // CPC Den Haag 2022
+  {
+    id:"19012345", name:"CPC Den Haag Half Marathon 2022", date:"2022-09-25", type:"HalfMarathon",
+    total_seconds:5292, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:5292, distance_km:21.4, pace_per_km:"4:07", avg_hr:171},
+  },
+  // CPC Den Haag 2023
+  {
+    id:"20913456", name:"CPC Den Haag Half Marathon 2023", date:"2023-03-12", type:"HalfMarathon",
+    total_seconds:5213, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:5213, distance_km:21.32, pace_per_km:"4:04", avg_hr:160},
+  },
+  // Amsterdam Marathon 2023
+  {
+    id:"23460999", name:"Amsterdam Marathon", date:"2023-10-15", type:"Marathon",
+    total_seconds:10725, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:10725, distance_km:42.89, pace_per_km:"4:09", avg_hr:162},
+  },
+  {
+    id:"24603920", name:"CPC Den Haag Half Marathon", date:"2024-03-10", type:"HalfMarathon",
+    total_seconds:4793, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:4793, distance_km:21.3, pace_per_km:"3:45", avg_hr:168},
+  },
+  {
+    id:"23772023", name:"Amsterdam Half Marathon", date:"2024-10-20", type:"HalfMarathon",
+    total_seconds:4841, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:4841, distance_km:21.3, pace_per_km:"3:47", avg_hr:177},
+  },
+  {
+    id:"30117165", name:"NN CPC Loop The Hague", date:"2025-03-09", type:"HalfMarathon",
+    total_seconds:4768, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:4768, distance_km:21.3, pace_per_km:"3:44", avg_hr:171},
+  },
+  {
+    id:"30116659", name:"KPMG Lentemarathon Amstelveen", date:"2025-03-16", type:"HalfMarathon",
+    total_seconds:5136, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:5136, distance_km:21.2, pace_per_km:"4:02", avg_hr:162},
+  },
+  {
+    id:"30117140", name:"TCS Amsterdam Half Marathon 2025", date:"2025-10-19", type:"HalfMarathon",
+    total_seconds:4725, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:4725, distance_km:21.3, pace_per_km:"3:42", avg_hr:168},
+  },
+  {
+    id:"37121866", name:"CPC Loop Den Haag 2026", date:"2026-03-15", type:"HalfMarathon",
+    total_seconds:null, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    run:{seconds:null, distance_km:21.1, pace_per_km:null, avg_hr:null},
+  },
+  {
+    id:"33677614", name:"10K Run Race", date:"2025-07-31", type:"10K",
+    total_seconds:2194, place_division:null, entrants_division:null, place_overall:28, entrants_overall:359,
+    run:{seconds:2194, distance_km:10.0, pace_per_km:"3:39", avg_hr:178},
+  },
+  // ── OLYMPIC ──────────────────────────────────────────────────────────────
+  {
+    id:"17340489", name:"Olympic Tri Huizen", date:"2022-06-05", type:"Olympic",
+    total_seconds:8572, place_division:5, entrants_division:30, place_overall:16, entrants_overall:115,
+    swim:{seconds:1629, distance_km:1.42, pace_per_100m:"1:55"},
+    t1:{seconds:175}, t2:{seconds:90},
+    bike:{seconds:3789, distance_km:37.79, speed_kmh:35.9, np_watts:279, avg_watts:273, elevation_m:112},
+    run:{seconds:2764, distance_km:10.95, pace_per_km:"4:13", avg_hr:null},
+  },
+  {
+    id:"19768289", name:"TRI ALMERE 2023", date:"2023-05-27", type:"Olympic",
+    total_seconds:8029, place_division:6, entrants_division:75, place_overall:15, entrants_overall:239,
+    swim:{seconds:1652, distance_km:1.5, pace_per_100m:"1:50"},
+    t1:{seconds:95}, t2:{seconds:102},
+    bike:{seconds:3839, distance_km:39.8, speed_kmh:37.3, np_watts:259, avg_watts:256, elevation_m:84},
+    run:{seconds:2341, distance_km:10.0, pace_per_km:"3:54", avg_hr:166},
+  },
+  {
+    id:"21757412", name:"Tri Amsterdam 2023", date:"2023-06-11", type:"Olympic",
+    total_seconds:7795, place_division:4, entrants_division:109, place_overall:10, entrants_overall:553,
+    swim:{seconds:1583, distance_km:1.41, pace_per_100m:"1:52"},
+    t1:{seconds:90}, t2:{seconds:64},
+    bike:{seconds:3683, distance_km:38.1, speed_kmh:37.2, np_watts:254, avg_watts:246, elevation_m:108},
+    run:{seconds:2375, distance_km:9.73, pace_per_km:"4:04", avg_hr:172},
+  },
+  {
+    id:"22696125", name:"DTS Ouderkerk 2023", date:"2023-08-19", type:"Olympic",
+    total_seconds:7774, place_division:6, entrants_division:319, place_overall:6, entrants_overall:319,
+    swim:{seconds:1445, distance_km:1.5, pace_per_100m:"1:36"},
+    t1:{seconds:172}, t2:{seconds:75},
+    bike:{seconds:3653, distance_km:38.5, speed_kmh:37.9, np_watts:255, avg_watts:251, elevation_m:88},
+    run:{seconds:2429, distance_km:10.2, pace_per_km:"3:58", avg_hr:171},
+  },
+  {
+    id:"23881106", name:"Tri Almere 2024", date:"2024-05-18", type:"Olympic",
+    total_seconds:7872, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:1563, distance_km:1.5, pace_per_100m:"1:44"},
+    t1:{seconds:null}, t2:{seconds:null},
+    bike:{seconds:4153, distance_km:44.6, speed_kmh:38.6, np_watts:265, avg_watts:258, elevation_m:61},
+    run:{seconds:2159, distance_km:9.63, pace_per_km:"3:44", avg_hr:166},
+  },
+  {
+    id:"23881187", name:"Tri Amsterdam 2024", date:"2024-06-09", type:"Olympic",
+    total_seconds:8040, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:1546, distance_km:1.52, pace_per_100m:"1:41"},
+    t1:{seconds:null}, t2:{seconds:null},
+    bike:{seconds:4219, distance_km:42.8, speed_kmh:36.5, np_watts:269, avg_watts:261, elevation_m:106},
+    run:{seconds:2275, distance_km:10.3, pace_per_km:"3:41", avg_hr:167},
+  },
+  {
+    id:"27982558", name:"DTS Ouderkerk 2024", date:"2024-08-24", type:"Olympic",
+    total_seconds:6042, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:1501, distance_km:1.47, pace_per_100m:"1:42"},
+    t1:{seconds:140}, t2:{seconds:12},
+    bike:{seconds:3604, distance_km:38.6, speed_kmh:38.6, np_watts:269, avg_watts:261, elevation_m:73},
+    run:{seconds:2356, distance_km:10.33, pace_per_km:"3:48", avg_hr:169},
+  },
+  {
+    id:"30116775", name:"DTS HLMREER", date:"2025-07-12", type:"Olympic",
+    total_seconds:6051, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:1338, distance_km:1.24, pace_per_100m:"1:48"},
+    t1:{seconds:179}, t2:{seconds:115},
+    bike:{seconds:3699, distance_km:38.76, speed_kmh:37.7, np_watts:270, avg_watts:260, elevation_m:143},
+    run:{seconds:2202, distance_km:9.12, pace_per_km:"4:01", avg_hr:171},
+  },
+  {
+    id:"34118868", name:"DTS Amsterdamse Bos", date:"2025-09-27", type:"Olympic",
+    total_seconds:6597, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:1535, distance_km:1.40, pace_per_100m:"1:50"},
+    t1:{seconds:253}, t2:{seconds:62},
+    bike:{seconds:3974, distance_km:41.09, speed_kmh:37.2, np_watts:273, avg_watts:263, elevation_m:61},
+    run:{seconds:2293, distance_km:9.52, pace_per_km:"4:01", avg_hr:170},
+  },
+  {
+    id:"37122071", name:"TRI ALMERE 2026", date:"2026-05-10", type:"Olympic",
+    total_seconds:null, place_division:null, entrants_division:null, place_overall:null, entrants_overall:null,
+    swim:{seconds:null, distance_km:1.5, pace_per_100m:null},
+    t1:{seconds:null}, t2:{seconds:null},
+    bike:{seconds:null, distance_km:40, speed_kmh:null, np_watts:null, avg_watts:null, elevation_m:null},
+    run:{seconds:null, distance_km:10, pace_per_km:null, avg_hr:null},
+  },
+];
+
+// ─── HELPERS ───────────────────────────────────────────────────────────────
+function isTri(t)  { return ["70.3","Olympic","Sprint","T100","FullIron"].indexOf(t) > -1; }
+function isRun(t)  { return ["Marathon","HalfMarathon","10K","5K"].indexOf(t) > -1; }
+function isDual(t) { return t === "Duathlon"; }
+
+function g(obj, key) { return obj && obj[key] != null ? obj[key] : null; } // safe getter
+
+function fmt(s) {
+  if (!s) return "\u2014";
+  var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), ss = Math.floor(s%60);
+  if (h > 0) return h + ":" + pad(m) + ":" + pad(ss);
+  return m + ":" + pad(ss);
+}
+function pad(n) { return n < 10 ? "0"+n : ""+n; }
+
+var TYPE_META = {
+  "70.3":         {label:"70.3",          color:"#3b82f6"},
+  "FullIron":     {label:"Full Iron",     color:"#ef4444"},
+  "T100":         {label:"T100",          color:"#a855f7"},
+  "Olympic":      {label:"Olympic",       color:"#14b8a6"},
+  "Sprint":       {label:"Sprint",        color:"#22c55e"},
+  "Duathlon":     {label:"Duathlon",      color:"#f59e0b"},
+  "HalfMarathon": {label:"Half Marathon", color:"#eab308"},
+  "Marathon":     {label:"Marathon",      color:"#f97316"},
+  "10K":          {label:"10K",           color:"#84cc16"},
+  "5K":           {label:"5K",            color:"#06b6d4"},
+};
+
+function pill(type) {
+  var m = TYPE_META[type] || {label:type, color:"#6b7280"};
+  return '<span class="pill" style="background:'+m.color+'22;color:'+m.color+';border:0.5px solid '+m.color+'44">'+m.label+'</span>';
+}
+function best() { return '<span class="best">BEST</span>'; }
+
+var FILTERS = [
+  {v:"all", l:"All races"},
+  {v:"FullIron", l:"Full Iron"},
+  {v:"70.3", l:"70.3"},
+  {v:"Olympic", l:"Olympic"},
+  {v:"T100", l:"T100"},
+  {v:"Duathlon", l:"Duathlon"},
+  {v:"HalfMarathon", l:"Half Marathon"},
+  {v:"Marathon", l:"Marathon"},
+  {v:"10K", l:"10K"},
+];
+
+var currentFilter = "all";
+var sortDir = "desc";
+var searchQuery = "";
+
+function paceToSeconds(pace) {
+  if (!pace) return null;
+  var parts = pace.split(":");
+  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
+function computeBests(races) {
+  var bests = {};
+  var allTri  = races.filter(function(r) { return isTri(r.type); });
+  var allRun  = races.filter(function(r) { return isRun(r.type); });
+  var allDual = races.filter(function(r) { return isDual(r.type); });
+
+  function minBy(arr, fn, k) {
+    var s = arr.filter(function(r) { return fn(r) != null; }).sort(function(a,b) { return fn(a)-fn(b); });
+    if (s[0]) bests[k] = s[0].id;
+  }
+  function maxBy(arr, fn, k) {
+    var s = arr.filter(function(r) { return fn(r) != null; }).sort(function(a,b) { return fn(b)-fn(a); });
+    if (s[0]) bests[k] = s[0].id;
+  }
+
+  minBy(allTri,  function(r) { return r.total_seconds; },                        "triTotal");
+  minBy(allTri,  function(r) { return paceToSeconds(g(r.swim,"pace_per_100m")); },"swim");
+  maxBy(allTri,  function(r) { return g(r.bike,"speed_kmh"); },                  "bike");
+  minBy(allTri,  function(r) { return paceToSeconds(g(r.run,"pace_per_km")); },  "triRun");
+  maxBy(allTri,  function(r) { return g(r.bike,"np_watts"); },                   "np");
+  minBy(allRun,  function(r) { return r.total_seconds; },                        "runTotal");
+  minBy(allRun,  function(r) { return paceToSeconds(g(r.run,"pace_per_km")); },  "runPace");
+  minBy(allDual, function(r) { return r.total_seconds; },                        "dualTotal");
+  maxBy(allDual, function(r) { return g(r.bike,"speed_kmh"); },                  "dualBike");
+  maxBy(allDual, function(r) { return g(r.bike,"np_watts"); },                   "dualNp");
+  return bests;
+}
+
+// ── SAFARI-SAFE CELL BUILDERS ──────────────────────────────────────────────
+function npCell(r, bestId) {
+  var np = g(r.bike,"np_watts"), avg = g(r.bike,"avg_watts");
+  if (np) return '<div class="cell-time" style="color:var(--power)">'+np+'W'+(bestId===r.id?best():'')+
+    '</div><div class="cell-sub">avg '+avg+'W</div>';
+  return '<span class="cell-na">\u2014</span>';
+}
+function dualNpCell(r, bestId) { return npCell(r, bestId); }
+function placeCell(r) {
+  if (r.place_division) return '<div style="font-size:10px;color:#555;line-height:1.7">'+
+    r.place_division+'/'+r.entrants_division+' div<br>'+r.place_overall+'/'+r.entrants_overall+' OA</div>';
+  return '<span class="cell-na">\u2014</span>';
+}
+function placeOACell(r) {
+  if (r.place_overall) return '<span style="font-size:10px;color:#555">'+r.place_overall+'/'+r.entrants_overall+' OA</span>';
+  return '<span class="cell-na">\u2014</span>';
+}
+function paceCell(r, bestId) {
+  var p = g(r.run,"pace_per_km");
+  if (p) return '<span class="mono" style="color:var(--run);font-size:13px;font-weight:500">'+p+
+    '<span style="font-size:10px;color:var(--text3)">/km</span>'+(bestId===r.id?best():'')+' </span>';
+  return '<span class="cell-na">\u2014</span>';
+}
+function hrCell(r) {
+  var hr = g(r.run,"avg_hr");
+  if (hr) return '<span class="mono" style="color:var(--power);font-size:12px">'+hr+' bpm</span>';
+  return '<span class="cell-na">\u2014</span>';
+}
+
+function render() {
+  var count = function(t) { return RACES.filter(function(r) { return r.type===t; }).length; };
+  var today = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+
+  document.getElementById("header-meta").innerHTML =
+    "Generated "+today+"<br>"+RACES.length+" total races \u00b7 TrainingPeaks";
+
+  var allTri  = RACES.filter(function(r) { return isTri(r.type); });
+  var best703 = allTri.filter(function(r) { return r.type==="70.3"&&r.total_seconds; }).sort(function(a,b){return a.total_seconds-b.total_seconds;})[0];
+  var bestFull= allTri.filter(function(r) { return r.type==="FullIron"&&r.total_seconds; }).sort(function(a,b){return a.total_seconds-b.total_seconds;})[0];
+  var allHM   = RACES.filter(function(r) { return r.type==="HalfMarathon"&&r.total_seconds; }).sort(function(a,b){return a.total_seconds-b.total_seconds;});
+  var all10K  = RACES.filter(function(r) { return r.type==="10K"&&r.total_seconds; }).sort(function(a,b){return a.total_seconds-b.total_seconds;});
+  var allOly  = RACES.filter(function(r) { return r.type==="Olympic"&&r.total_seconds; }).sort(function(a,b){return a.total_seconds-b.total_seconds;});
+  var allMara = RACES.filter(function(r) { return r.type==="Marathon"&&r.total_seconds; }).sort(function(a,b){return a.total_seconds-b.total_seconds;});
+
+  var stats = [
+    {label:"Total Races",        value:RACES.length,    color:"var(--text)",  sub:"all disciplines"},
+    {label:"Full Iron",          value:count("FullIron"),color:"var(--iron)", sub:bestFull?"best "+fmt(bestFull.total_seconds):"\u2014"},
+    {label:"70.3 Races",         value:count("70.3"),   color:"var(--703)",   sub:best703?"best "+fmt(best703.total_seconds):"\u2014"},
+    {label:"Olympic",            value:count("Olympic"),color:"#14b8a6",      sub:allOly[0]?"best "+fmt(allOly[0].total_seconds):"\u2014"},
+    {label:"Half Marathons",     value:count("HalfMarathon"),color:"var(--hm)",sub:allHM[0]?"best "+fmt(allHM[0].total_seconds):"\u2014"},
+    {label:"Best Half Marathon", value:allHM[0]?fmt(allHM[0].total_seconds):"\u2014", color:"var(--hm)", sub:allHM[0]&&allHM[0].run?allHM[0].run.pace_per_km+"/km":""},
+    {label:"Best 10K",           value:all10K[0]?fmt(all10K[0].total_seconds):"\u2014",color:"var(--10k)",sub:all10K[0]&&all10K[0].run?all10K[0].run.pace_per_km+"/km":""},
+    {label:"Best Marathon",      value:allMara[0]?fmt(allMara[0].total_seconds):"\u2014",color:"#f97316",sub:allMara[0]&&allMara[0].run?allMara[0].run.pace_per_km+"/km":""},
+  ];
+
+  document.getElementById("stats-row").innerHTML = stats.map(function(s) {
+    return '<div class="stat"><div class="stat-label">'+s.label+'</div>'+
+      '<div class="stat-value" style="color:'+s.color+'">'+s.value+'</div>'+
+      (s.sub?'<div class="stat-sub">'+s.sub+'</div>':'')+
+      '</div>';
+  }).join("");
+
+  var filterBtns = FILTERS.map(function(f) {
+    var c = f.v==="all" ? RACES.length : RACES.filter(function(r){return r.type===f.v;}).length;
+    return '<button class="filter-btn'+(currentFilter===f.v?" active":"")+'" onclick="setFilter(\''+f.v+'\')">'+
+      f.l+'<span class="filter-count">'+c+'</span></button>';
+  }).join("");
+
+  document.getElementById("filters-row").innerHTML = filterBtns +
+    '<button class="sort-btn" onclick="toggleSort()" style="margin-left:0">'+(sortDir==="desc"?"\u2193 Newest":"\u2191 Oldest")+'</button>'+
+    '<div class="search-wrap">'+
+    '<span class="search-icon">&#8981;</span>'+
+    '<input class="search-input" id="race-search" type="text" placeholder="Search races\u2026" oninput="onSearch(this)" value="'+searchQuery+'">'+
+    '<span class="search-clear" id="search-clear" onclick="clearSearch()" style="display:'+(searchQuery?'block':'none')+'">&times;</span>'+
+    '</div>';
+
+  var filtered = currentFilter === "all" ? RACES.slice() : RACES.filter(function(r){return r.type===currentFilter;});
+  if (searchQuery) {
+    var q = searchQuery.toLowerCase();
+    filtered = filtered.filter(function(r) {
+      return r.name.toLowerCase().indexOf(q) > -1 || r.date.indexOf(q) > -1 || (r.type||"").toLowerCase().indexOf(q) > -1;
+    });
+  }
+  filtered.sort(function(a,b) {
+    return sortDir==="desc" ? new Date(b.date)-new Date(a.date) : new Date(a.date)-new Date(b.date);
+  });
+
+  var bests = computeBests(filtered);
+  var triRaces  = filtered.filter(function(r) { return isTri(r.type); });
+  var dualRaces = filtered.filter(function(r) { return isDual(r.type); });
+  var runRaces  = filtered.filter(function(r) { return isRun(r.type); });
+
+  var html = "";
+
+  // ── TRI TABLE
+  if (triRaces.length) {
+    html += '<div class="section"><div class="section-header">\uD83C\uDFC5 Triathlons <span class="section-count">'+triRaces.length+'</span></div>'+
+      '<div class="table-wrap"><table><thead><tr>'+
+      '<th style="width:18%">Race</th>'+
+      '<th style="color:var(--swim)">&#x1F3CA; Swim</th>'+
+      '<th>T1</th>'+
+      '<th style="color:var(--bike)">&#x1F6B4; Bike</th>'+
+      '<th style="color:var(--power)">NP</th>'+
+      '<th>Elev</th>'+
+      '<th>T2</th>'+
+      '<th style="color:var(--run)">&#x1F3C3; Run</th>'+
+      '<th>Total</th>'+
+      '<th>Place</th>'+
+      '</tr></thead><tbody>';
+
+    triRaces.forEach(function(r) {
+      var swim = r.swim || {};
+      var bike = r.bike || {};
+      var run  = r.run  || {};
+      var t1   = r.t1   || {};
+      var t2   = r.t2   || {};
+      html +=
+        '<tr>'+
+        '<td><div class="cell-race-name">'+r.name+'</div>'+
+          '<div class="cell-meta"><span class="cell-date">'+r.date.slice(0,7)+'</span>'+pill(r.type)+'</div></td>'+
+        '<td><div class="cell-time" style="color:var(--swim)">'+fmt(swim.seconds)+(bests.swim===r.id?best():'')+
+          '</div><div class="cell-sub">'+(swim.pace_per_100m?swim.pace_per_100m+"/100m":"")+
+          '</div><div class="cell-sub">'+(swim.distance_km?swim.distance_km+"km":"")+'</div></td>'+
+        '<td><span class="cell-dim">'+fmt(t1.seconds)+'</span></td>'+
+        '<td><div class="cell-time" style="color:var(--bike)">'+fmt(bike.seconds)+(bests.bike===r.id?best():'')+
+          '</div><div class="cell-sub">'+(bike.speed_kmh?bike.speed_kmh.toFixed(1)+" km/h":"")+
+          '</div><div class="cell-sub">'+(bike.distance_km?bike.distance_km+"km":"")+'</div></td>'+
+        '<td>'+npCell(r,bests.np)+'</td>'+
+        '<td><span class="mono" style="color:#666;font-size:12px">'+(bike.elevation_m!=null?bike.elevation_m.toLocaleString()+"m":"\u2014")+'</span></td>'+
+        '<td><span class="cell-dim">'+fmt(t2.seconds)+'</span></td>'+
+        '<td><div class="cell-time" style="color:var(--run)">'+fmt(run.seconds)+(bests.triRun===r.id?best():'')+
+          '</div><div class="cell-sub">'+(run.pace_per_km?run.pace_per_km+"/km":"")+
+          '</div><div class="cell-sub">'+(run.distance_km?run.distance_km+"km":"")+'</div></td>'+
+        '<td><div class="cell-total">'+fmt(r.total_seconds)+(bests.triTotal===r.id?best():'')+'</div></td>'+
+        '<td>'+placeCell(r)+'</td>'+
+        '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  // ── DUATHLON TABLE
+  if (dualRaces.length) {
+    html += '<div class="section"><div class="section-header">&#9889; Duathlon <span class="section-count">'+dualRaces.length+'</span></div>'+
+      '<div class="table-wrap"><table><thead><tr>'+
+      '<th style="width:20%">Race</th>'+
+      '<th style="color:var(--run)">&#x1F3C3; Run 1</th>'+
+      '<th>T1</th>'+
+      '<th style="color:var(--bike)">&#x1F6B4; Bike</th>'+
+      '<th style="color:var(--power)">NP</th>'+
+      '<th>Elev</th>'+
+      '<th>T2</th>'+
+      '<th style="color:var(--run)">&#x1F3C3; Run 2</th>'+
+      '<th>Total</th>'+
+      '<th>Place</th>'+
+      '</tr></thead><tbody>';
+
+    dualRaces.forEach(function(r) {
+      var bike = r.bike || {};
+      var t1   = r.t1   || {};
+      var t2   = r.t2   || {};
+      var run1 = r.run1 || {};
+      var run2 = r.run2 || {};
+      html +=
+        '<tr>'+
+        '<td><div class="cell-race-name">'+r.name+'</div>'+
+          '<div class="cell-meta"><span class="cell-date">'+r.date.slice(0,7)+'</span>'+pill(r.type)+'</div></td>'+
+        '<td><div class="cell-time" style="color:var(--run)">'+fmt(run1.seconds)+
+          '</div><div class="cell-sub">'+(run1.pace_per_km?run1.pace_per_km+"/km":"")+
+          '</div><div class="cell-sub">'+(run1.distance_km?run1.distance_km.toFixed(1)+"km":"")+'</div></td>'+
+        '<td><span class="cell-dim">'+fmt(t1.seconds)+'</span></td>'+
+        '<td><div class="cell-time" style="color:var(--bike)">'+fmt(bike.seconds)+
+          '</div><div class="cell-sub">'+(bike.speed_kmh?bike.speed_kmh.toFixed(1)+" km/h":"")+
+          '</div><div class="cell-sub">'+(bike.distance_km?bike.distance_km.toFixed(1)+"km":"")+'</div></td>'+
+        '<td>'+dualNpCell(r,bests.dualNp)+'</td>'+
+        '<td><span class="mono" style="color:#666;font-size:12px">'+(bike.elevation_m!=null?bike.elevation_m+"m":"\u2014")+'</span></td>'+
+        '<td><span class="cell-dim">'+fmt(t2.seconds)+'</span></td>'+
+        '<td><div class="cell-time" style="color:var(--run)">'+fmt(run2.seconds)+
+          '</div><div class="cell-sub">'+(run2.pace_per_km?run2.pace_per_km+"/km":"")+
+          '</div><div class="cell-sub">'+(run2.distance_km?run2.distance_km.toFixed(1)+"km":"")+'</div></td>'+
+        '<td><div class="cell-total">'+fmt(r.total_seconds)+(bests.dualTotal===r.id?best():'')+'</div></td>'+
+        '<td><span class="cell-na">\u2014</span></td>'+
+        '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  // ── RUN TABLE
+  if (runRaces.length) {
+    html += '<div class="section"><div class="section-header">&#x1F3C3; Running <span class="section-count">'+runRaces.length+'</span></div>'+
+      '<div class="table-wrap"><table><thead><tr>'+
+      '<th style="width:35%">Race</th>'+
+      '<th>Distance</th><th>Time</th>'+
+      '<th style="color:var(--run)">Pace</th>'+
+      '<th>Avg HR</th><th>Place</th>'+
+      '</tr></thead><tbody>';
+
+    runRaces.forEach(function(r) {
+      var run = r.run || {};
+      html +=
+        '<tr>'+
+        '<td><div class="cell-race-name">'+r.name+'</div>'+
+          '<div class="cell-meta"><span class="cell-date">'+r.date.slice(0,7)+'</span>'+pill(r.type)+'</div></td>'+
+        '<td><span style="font-size:12px;color:#666">'+(run.distance_km?run.distance_km.toFixed(1):"\u2014")+" km</span></td>"+
+        '<td><div class="cell-total">'+fmt(r.total_seconds)+(bests.runTotal===r.id?best():'')+'</div></td>'+
+        '<td>'+paceCell(r,bests.runPace)+'</td>'+
+        '<td>'+hrCell(r)+'</td>'+
+        '<td>'+placeOACell(r)+'</td>'+
+        '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  if (!filtered.length) html = '<div class="empty">No races found'+(searchQuery?' for &ldquo;'+searchQuery+'&rdquo;':' for this filter')+'.</div>';
+
+  document.getElementById("content").innerHTML = html;
+  document.getElementById("footer-text").textContent =
+    "Race Dashboard \u00b7 "+RACES.length+" races \u00b7 Generated "+today+" \u00b7 Data from TrainingPeaks";
+}
+
+function setFilter(v) { currentFilter = v; render(); }
+function toggleSort() { sortDir = sortDir === "desc" ? "asc" : "desc"; render(); }
+function onSearch(el) {
+  searchQuery = el.value;
+  var clr = document.getElementById("search-clear");
+  if (clr) clr.style.display = searchQuery ? "block" : "none";
+  render();
+  var input = document.getElementById("race-search");
+  if (input) { input.focus(); }
+}
+function clearSearch() { searchQuery = ""; render(); }
+
+render();
+</script>
